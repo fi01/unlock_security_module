@@ -18,11 +18,11 @@
 #ifndef PTMX_H
 #define PTMX_H
 
-#define PTMX_DEVICE "/dev/ptmx"
+#include <stdbool.h>
 
-unsigned long int get_ptmx_fops_address(void);
+extern bool ptmx_run_in_kernel_mode(bool (*function)(void *), void *user_data);
+
+extern bool ptmx_map_memory(unsigned long int map_address, unsigned long physical_address, unsigned long int size);
+extern bool ptmx_unmap_memory(unsigned long int map_address, unsigned long int size);
 
 #endif /* PTMX_H */
-/*
-vi:ts=2:nowrap:ai:expandtab:sw=2
-*/

