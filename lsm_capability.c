@@ -77,6 +77,7 @@ bool
 has_fjsec_lsm(void)
 {
   char security_ops_name[SECURITY_NAME_MAX + 1];
+  void *start, *end;
   void *search_address;
 
   security_ops = NULL;
@@ -84,12 +85,29 @@ has_fjsec_lsm(void)
   memset(security_ops_name, 0, sizeof security_ops_name);
   strcpy(security_ops_name, "fjsec");
 
-  search_address = convert_to_kernel_mapped_address((void *)KERNEL_BASE_ADDRESS);
+  start = convert_to_kernel_mapped_address((void *)KERNEL_BASE_ADDRESS);
+  end = start + KERNEL_MEMORY_SIZE;
 
-  security_ops = memmem(search_address, KERNEL_MEMORY_SIZE - sizeof security_ops_name,
-                        security_ops_name, sizeof security_ops_name);
-  if (!security_ops) {
-    return false;
+  while (true) {
+    unsigned long int size;
+
+    size = (end - start) - sizeof security_ops_name;
+    if (size <= 0) {
+      return false;
+    }
+
+    security_ops = memmem(start, size, security_ops_name, sizeof security_ops_name);
+    if (!security_ops) {
+      return false;
+    }
+
+    if (security_ops[SECURITY_OPS_START]) {
+      if (kallsyms_in_memory_lookup_address(security_ops[SECURITY_OPS_START])) {
+	return true;
+      }
+    }
+
+    start = &security_ops[SECURITY_OPS_START];
   }
 
   return true;
