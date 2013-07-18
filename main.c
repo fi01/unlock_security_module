@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 #include "kernel_memory.h"
-#include "kallsymsprint.h"
+#include "libkallsyms/kallsyms_in_memory.h"
 #include "ccsecurity.h"
 #include "reset_security_ops.h"
 #include "lsm_capability.h"
@@ -11,13 +11,13 @@
 #define CHECK_SYMBOL    "printk"
 
 static bool
-check_is_kallsymsprint_working(void)
+check_is_kallsyms_in_memory_working(void)
 {
   unsigned long addr;
   const char *name;
 
-  addr = kallsyms_lookup_name(CHECK_SYMBOL);
-  name = kallsyms_lookup_address(addr);
+  addr = kallsyms_in_memory_lookup_name(CHECK_SYMBOL);
+  name = kallsyms_in_memory_lookup_address(addr);
 
   if (strcmp(name, CHECK_SYMBOL) != 0) {
     return false;
@@ -106,16 +106,16 @@ main(int argc, char **argv)
 
   printf("Finding kallsyms address in memory...\n");
   mapped_address = convert_to_kernel_mapped_address((void *)KERNEL_BASE_ADDRESS);
-  if (get_kallsyms(mapped_address, KERNEL_MEMORY_SIZE)) {
-    printf("Checking kallsyms working...\n");
+  if (kallsyms_in_memory_init(mapped_address, KERNEL_MEMORY_SIZE)) {
+    printf("Checking kallsyms_in_memory working...\n");
 
-    if (check_is_kallsymsprint_working()) {
+    if (check_is_kallsyms_in_memory_working()) {
       printf("OK. Ready to unlock security module.\n\n");
 
       do_unlock();
     }
     else {
-      printf("kallsymsprint doesn't work\n");
+      printf("kallsyms_in_memory doesn't work\n");
     }
   }
   else {

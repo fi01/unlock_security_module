@@ -13,3 +13,6 @@
 [submodule "libfj_hdcp_exploit"]
 	path = libfj_hdcp_exploit
 	url = git://github.com/fi01/libfj_hdcp_exploit.git
+[submodule "libkallsyms"]
+	path = libkallsyms
+	url = https://github.com/android-rooting-tools/libkallsyms.git

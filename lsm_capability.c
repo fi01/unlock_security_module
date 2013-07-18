@@ -3,7 +3,7 @@
 #include <string.h>
 
 #include "kernel_memory.h"
-#include "kallsymsprint.h"
+#include "libkallsyms/kallsyms_in_memory.h"
 
 #define SECURITY_NAME_MAX       10
 
@@ -31,7 +31,8 @@ unlock_lsm(const char *symbol_prefix)
 
   for (i = SECURITY_OPS_START; i < SECURITY_OPS_END; i++) {
     if (security_ops[i]) {
-      const char *name = kallsyms_lookup_address((unsigned long)security_ops[i]);
+      const char *name = kallsyms_in_memory_lookup_address((unsigned long)security_ops[i]);
+      printf("security_ops[%d] = 0x%08x <%s>\n", i, security_ops[i], name);
 
       if (name && strncmp(name, symbol_prefix, symbol_prefix_len) == 0) {
         char fix_name[256];
@@ -40,12 +41,12 @@ unlock_lsm(const char *symbol_prefix)
         if (strlen(name + symbol_prefix_len) + sizeof (DEFAULT_CAP_PREFIX) < sizeof (fix_name)) {
 	  strcpy(fix_name, DEFAULT_CAP_PREFIX);
 	  strcat(fix_name, name + symbol_prefix_len);
-	  fix_func = (void *)kallsyms_lookup_name(fix_name);
+	  fix_func = (void *)kallsyms_in_memory_lookup_name(fix_name);
 	}
 
         if (fix_func == NULL) {
 	  strcpy(fix_name, DEFAULT_CAP_FUNCTION);
-	  fix_func = (void *)kallsyms_lookup_name(fix_name);
+	  fix_func = (void *)kallsyms_in_memory_lookup_name(fix_name);
 	}
 
 	if (fix_func == NULL) {
@@ -115,8 +116,8 @@ has_miyabi_lsm(void)
 
   kernel_entry = convert_to_kernel_mapped_address((void *)KERNEL_BASE_ADDRESS);
 
-  miyabi_check.ptrace_access_check_address = (void *)kallsyms_lookup_name("miyabi_ptrace_access_check");
-  miyabi_check.ptrace_traceme_address = (void *)kallsyms_lookup_name("miyabi_ptrace_traceme");
+  miyabi_check.ptrace_access_check_address = (void *)kallsyms_in_memory_lookup_name("miyabi_ptrace_access_check");
+  miyabi_check.ptrace_traceme_address = (void *)kallsyms_in_memory_lookup_name("miyabi_ptrace_traceme");
   if (!miyabi_check.ptrace_access_check_address || !miyabi_check.ptrace_traceme_address) {
     return false;
   }
@@ -135,7 +136,7 @@ has_miyabi_lsm(void)
       return false;
     }
 
-    if (!is_address_in_kallsyms_addresses(found)) {
+    if (!is_address_in_kallsyms_table(found)) {
       security_ops = found - sizeof (*security_ops) * SECURITY_OPS_START;
       return true;
     }

@@ -2,7 +2,7 @@
 #include <stdio.h>
 
 #include "device_database/device_database.h"
-#include "kallsymsprint.h"
+#include "libkallsyms/kallsyms_in_memory.h"
 #include "kernel_memory.h"
 
 typedef struct _supported_device {
@@ -34,11 +34,11 @@ setup_variables(void)
   }
 
   if (!ccsecurity_ops) {
-    ccsecurity_ops = (void *)kallsyms_lookup_name("ccsecurity_ops");
+    ccsecurity_ops = (void *)kallsyms_in_memory_lookup_name("ccsecurity_ops");
   }
 
   if (!search_binary_handler) {
-    search_binary_handler = (void *)kallsyms_lookup_name("search_binary_handler");
+    search_binary_handler = (void *)kallsyms_in_memory_lookup_name("search_binary_handler");
   }
 
   return ccsecurity_ops && search_binary_handler;
@@ -47,7 +47,7 @@ setup_variables(void)
 bool
 has_ccsecurity(void)
 {
-  return kallsyms_lookup_name("ccsecurity_ops") != 0;
+  return kallsyms_in_memory_lookup_name("ccsecurity_ops") != 0;
 }
 
 #define NUM_CCSECURITY_OPS  39
@@ -66,7 +66,7 @@ unlock_ccsecurity(void)
   }
 
   p = convert_to_kernel_mapped_address(ccsecurity_ops);
-  name = kallsyms_lookup_address((unsigned long)p[BINARY_HANDLER_POS]);
+  name = kallsyms_in_memory_lookup_address((unsigned long)p[BINARY_HANDLER_POS]);
 
   if (strcmp(name, "__ccs_search_binary_handler")) {
     if (!strcmp(name, "search_binary_handler")) {

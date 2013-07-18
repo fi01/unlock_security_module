@@ -1,12 +1,12 @@
 #define _LARGEFILE64_SOURCE
 #include <stdio.h>
 
-#include "kallsymsprint.h"
+#include "libkallsyms/kallsyms_in_memory.h"
 #include "ptmx.h"
 
 bool has_reset_security_ops(void)
 {
-  return kallsyms_lookup_name("reset_security_ops") != 0;
+  return kallsyms_in_memory_lookup_name("reset_security_ops") != 0;
 }
 
 static bool
@@ -20,7 +20,7 @@ call_reset_security_ops(void *user_data)
 
 bool run_reset_security_ops(void)
 {
-  unsigned long reset_security_ops_address = kallsyms_lookup_name("reset_security_ops");
+  unsigned long reset_security_ops_address = kallsyms_in_memory_lookup_name("reset_security_ops");
 
   return ptmx_run_in_kernel_mode(call_reset_security_ops, (void *)reset_security_ops_address);
 }
