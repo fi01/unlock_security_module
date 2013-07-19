@@ -8,7 +8,7 @@
 #define SECURITY_NAME_MAX       10
 
 #define SECURITY_OPS_START      ((SECURITY_NAME_MAX + 3) / 4)
-#define SECURITY_OPS_END        141
+#define SECURITY_OPS_END        142
 
 #define DEFAULT_CAP_PREFIX      "cap_"
 #define DEFAULT_CAP_FUNCTION    "cap_syslog"
