@@ -15,14 +15,14 @@ LOCAL_SRC_FILES := \
 
 LOCAL_MODULE := unlock_security_module
 LOCAL_MODULE_TAGS := optional
-LOCAL_FORCE_STATIC_EXECUTABLE := true
 LOCAL_STATIC_LIBRARIES := libdiagexploit
 LOCAL_STATIC_LIBRARIES += libperf_event_exploit
 LOCAL_STATIC_LIBRARIES += libdevice_database
 LOCAL_STATIC_LIBRARIES += libmsm_acdb_exploit
 LOCAL_STATIC_LIBRARIES += libfj_hdcp_exploit
+LOCAL_STATIC_LIBRARIES += libfb_mem_exploit
 LOCAL_STATIC_LIBRARIES += libkallsyms
-LOCAL_STATIC_LIBRARIES += libcutils libc
+LOCAL_LDFLAGS += -static
 
 include $(BUILD_EXECUTABLE)
 
