@@ -52,18 +52,6 @@ do_unlock(void)
     goto unlock_failed;
   }
 
-  printf("Checking reset_security_ops...\n");
-  if (has_reset_security_ops()) {
-    printf("Found reset_security_ops. Run it.\n");
-    if (run_reset_security_ops()) {
-      printf("OK.\n\n");
-      success = true;
-    }
-    else {
-      printf("Failed.\n\n");
-    }
-  }
-
   printf("Checking fjsec LSM...\n");
   if (has_fjsec_lsm()) {
     printf("Found fjsec LSM.\n");
@@ -84,6 +72,18 @@ do_unlock(void)
     }
 
     goto unlock_failed;
+  }
+
+  printf("Checking reset_security_ops...\n");
+  if (has_reset_security_ops()) {
+    printf("Found reset_security_ops. Run it.\n");
+    if (run_reset_security_ops()) {
+      printf("OK.\n\n");
+      success = true;
+    }
+    else {
+      printf("Failed.\n\n");
+    }
   }
 
   if (success) {
