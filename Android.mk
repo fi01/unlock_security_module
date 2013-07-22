@@ -9,6 +9,7 @@ LOCAL_SRC_FILES := \
   ptmx.c \
   mm.c \
   fops_handler.c \
+  mmc_protect_part.c \
   ccsecurity.c \
   reset_security_ops.c \
   lsm_capability.c

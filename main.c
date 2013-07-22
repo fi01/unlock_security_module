@@ -7,6 +7,7 @@
 #include "ccsecurity.h"
 #include "reset_security_ops.h"
 #include "lsm_capability.h"
+#include "mmc_protect_part.h"
 
 #define CHECK_SYMBOL    "printk"
 
@@ -30,6 +31,15 @@ static bool
 do_unlock(void)
 {
   bool success = false;
+
+  printf("Checking mmc_protect_part...\n");
+  if (has_mmc_protect_part()) {
+    printf("Found mmc_protect_part.\n");
+
+    if (!unlock_mmc_protect_part()) {
+      goto unlock_failed;
+    }
+  }
 
   printf("Checking ccsecurity...\n");
   if (has_ccsecurity()) {
