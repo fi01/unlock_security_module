@@ -108,7 +108,9 @@ map_kernel_memory(void)
   fb_mmap_fd = -1;
 
   kernel_mapped_address = PTMX_MEMORY_MAPPED_ADDRESS;
-  return ptmx_map_memory(PTMX_MEMORY_MAPPED_ADDRESS, kernel_physical_offset, KERNEL_MEMORY_SIZE);
+  if (ptmx_map_memory(PTMX_MEMORY_MAPPED_ADDRESS, kernel_physical_offset, KERNEL_MEMORY_SIZE)) {
+    return true;
+  }
 
   fb_mem_set_kernel_phys_offset(kernel_physical_offset - 0x8000);
 
