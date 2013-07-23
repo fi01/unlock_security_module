@@ -26,6 +26,10 @@ LOCAL_STATIC_LIBRARIES += libkallsyms
 LOCAL_STATIC_LIBRARIES += libz_static
 LOCAL_LDFLAGS += -static
 
+TOP_SRCDIR := $(abspath $(LOCAL_PATH))
+TARGET_C_INCLUDES += \
+  $(TOP_SRCDIR)/device_database
+
 include $(BUILD_EXECUTABLE)
 
 include $(call all-makefiles-under,$(LOCAL_PATH))
