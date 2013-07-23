@@ -77,7 +77,7 @@ unlock_mmc_protect_part(void)
   p = convert_to_kernel_mapped_address((void *)mmc_protect_part_address);
 
   for (i = 0; i < n_mmc_protect_part; i++) {
-    if (p[i].protect & ~MMC_PROTECT_READ) {
+    if (p[i].protect & MMC_PROTECT_READ) {
       p[i].protect &= ~MMC_PROTECT_READ;
       count_readable++;
     }
@@ -90,10 +90,10 @@ unlock_mmc_protect_part(void)
 #ifdef UNLOCK_MMC_RECOVERY_WRITE
     case MMC_RECOVERY_PARTITION:
 #endif
-#ifndef UNLOCK_MMC_SYSTEM_WRITE
+#ifdef UNLOCK_MMC_SYSTEM_WRITE
     case MMC_SYSTEM_PARTITION:
 #endif
-      if (p[i].protect & ~MMC_PROTECT_WRITE) {
+      if (p[i].protect & MMC_PROTECT_WRITE) {
 	p[i].protect &= ~MMC_PROTECT_WRITE;
 	count_writable++;
       }
