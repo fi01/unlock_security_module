@@ -6,7 +6,7 @@
 #include "ptmx.h"
 #include "kernel_memory.h"
 
-#define PTMX_MEMORY_MAPPED_ADDRESS      0x10000000
+#define PTMX_MEMORY_MAPPED_ADDRESS      0x20000000
 
 #define CONFIG_SEARCH_STRING   "CONFIG_PHYS_OFFSET="
 #define CONFIG_SEARCH_LENGTH   (sizeof(CONFIG_SEARCH_STRING) - 1)
