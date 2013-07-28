@@ -28,6 +28,35 @@ check_is_kallsyms_in_memory_working(void)
 }
 
 static bool
+show_essential_address(void)
+{
+  static const char *essential_symbols[] = {
+    "prepare_kernel_cred",
+    "commit_creds",
+    "ptmx_fops",
+    "remap_pfn_range",
+    "vmalloc_exec",
+    NULL
+  };
+  const char **name;
+  bool ret = false;
+
+  printf("Essential symbols are:\n");
+  for (name = essential_symbols; *name; name++) {
+    unsigned long addr;
+
+    addr = kallsyms_in_memory_lookup_name(*name);
+    if (addr) {
+      printf("  %s = 0x%08x\n", *name, addr);
+      ret = true;
+    }
+  }
+  printf("\n");
+
+  return ret;
+}
+
+static bool
 do_unlock(void)
 {
   bool success = false;
@@ -121,6 +150,8 @@ main(int argc, char **argv)
 
     if (check_is_kallsyms_in_memory_working()) {
       printf("OK. Ready to unlock security module.\n\n");
+
+      show_essential_address();
 
       do_unlock();
     }
