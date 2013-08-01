@@ -11,14 +11,15 @@
 
 #define CHECK_SYMBOL    "printk"
 
+
 static bool
-check_is_kallsyms_in_memory_working(void)
+check_is_kallsyms_in_memory_working(kallsyms *info)
 {
   unsigned long addr;
   const char *name;
 
-  addr = kallsyms_in_memory_lookup_name(CHECK_SYMBOL);
-  name = kallsyms_in_memory_lookup_address(addr);
+  addr = kallsyms_in_memory_lookup_name(info, CHECK_SYMBOL);
+  name = kallsyms_in_memory_lookup_address(info, addr);
 
   if (strcmp(name, CHECK_SYMBOL) != 0) {
     return false;
@@ -28,7 +29,7 @@ check_is_kallsyms_in_memory_working(void)
 }
 
 static bool
-show_essential_address(void)
+show_essential_address(kallsyms *info)
 {
   static const char *essential_symbols[] = {
     "prepare_kernel_cred",
@@ -45,7 +46,7 @@ show_essential_address(void)
   for (name = essential_symbols; *name; name++) {
     unsigned long addr;
 
-    addr = kallsyms_in_memory_lookup_name(*name);
+    addr = kallsyms_in_memory_lookup_name(info, *name);
     if (addr) {
       printf("  %s = 0x%08x\n", *name, addr);
       ret = true;
@@ -57,24 +58,24 @@ show_essential_address(void)
 }
 
 static bool
-do_unlock(void)
+do_unlock(kallsyms *info)
 {
   bool success = false;
 
   printf("Checking mmc_protect_part...\n");
-  if (has_mmc_protect_part()) {
+  if (has_mmc_protect_part(info)) {
     printf("Found mmc_protect_part.\n");
 
-    if (!unlock_mmc_protect_part()) {
+    if (!unlock_mmc_protect_part(info)) {
       goto unlock_failed;
     }
   }
 
   printf("Checking ccsecurity...\n");
-  if (has_ccsecurity()) {
+  if (has_ccsecurity(info)) {
     printf("Found ccsecurity.\n");
 
-    if (unlock_ccsecurity()) {
+    if (unlock_ccsecurity(info)) {
       goto unlock_success;
     }
 
@@ -82,10 +83,10 @@ do_unlock(void)
   }
 
   printf("Checking fjsec LSM...\n");
-  if (has_fjsec_lsm()) {
+  if (has_fjsec_lsm(info)) {
     printf("Found fjsec LSM.\n");
 
-    if (unlock_fjsec_lsm()) {
+    if (unlock_fjsec_lsm(info)) {
       goto unlock_success;
     }
 
@@ -93,10 +94,10 @@ do_unlock(void)
   }
 
   printf("Checking miyabi LSM...\n");
-  if (has_miyabi_lsm()) {
+  if (has_miyabi_lsm(info)) {
     printf("Found miyabi LSM.\n");
 
-    if (unlock_miyabi_lsm()) {
+    if (unlock_miyabi_lsm(info)) {
       goto unlock_success;
     }
 
@@ -104,9 +105,9 @@ do_unlock(void)
   }
 
   printf("Checking reset_security_ops...\n");
-  if (has_reset_security_ops()) {
+  if (has_reset_security_ops(info)) {
     printf("Found reset_security_ops. Run it.\n");
-    if (run_reset_security_ops()) {
+    if (run_reset_security_ops(info)) {
       printf("OK.\n\n");
       success = true;
     }
@@ -135,6 +136,7 @@ int
 main(int argc, char **argv)
 {
   void *mapped_address;
+  kallsyms *info;
 
   printf("Mapping kernel memory...\n");
   if (!map_kernel_memory()) {
@@ -145,19 +147,22 @@ main(int argc, char **argv)
 
   printf("Finding kallsyms address in memory...\n");
   mapped_address = convert_to_kernel_mapped_address((void *)KERNEL_BASE_ADDRESS);
-  if (kallsyms_in_memory_init(mapped_address, KERNEL_MEMORY_SIZE)) {
+  info = kallsyms_in_memory_init(mapped_address, KERNEL_MEMORY_SIZE);
+  if (info) {
     printf("Checking kallsyms_in_memory working...\n");
 
-    if (check_is_kallsyms_in_memory_working()) {
+    if (check_is_kallsyms_in_memory_working(info)) {
       printf("OK. Ready to unlock security module.\n\n");
 
-      show_essential_address();
+      show_essential_address(info);
 
-      do_unlock();
+      do_unlock(info);
     }
     else {
       printf("kallsyms_in_memory doesn't work\n");
     }
+
+    kallsyms_in_memory_free(info);
   }
   else {
     printf("Failed: Lookup kallsyms in memory.\n");

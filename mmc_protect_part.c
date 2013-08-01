@@ -44,12 +44,12 @@ static int n_mmc_protect_part = sizeof (check_mmc_protect_part) / sizeof (check_
 static unsigned long int mmc_protect_part_address;
 
 bool
-has_mmc_protect_part(void)
+has_mmc_protect_part(kallsyms *info)
 {
   struct mmc_protect_inf *p;
   int i;
 
-  mmc_protect_part_address = kallsyms_in_memory_lookup_name("mmc_protect_part");
+  mmc_protect_part_address = kallsyms_in_memory_lookup_name(info, "mmc_protect_part");
   if (!mmc_protect_part_address) {
     return false;
   }
@@ -67,7 +67,7 @@ has_mmc_protect_part(void)
 }
 
 bool
-unlock_mmc_protect_part(void)
+unlock_mmc_protect_part(kallsyms *info)
 {
   struct mmc_protect_inf *p;
   int count_readable = 0;

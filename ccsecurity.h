@@ -2,8 +2,9 @@
 #define __CCSECURITY_H__
 
 #include <stdbool.h>
+#include "libkallsyms/kallsyms_in_memory.h"
 
-extern bool has_ccsecurity(void);
-extern bool unlock_ccsecurity(void);
+extern bool has_ccsecurity(kallsyms *info);
+extern bool unlock_ccsecurity(kallsyms *info);
 
 #endif /* __CCSECURITY_H__ */

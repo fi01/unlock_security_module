@@ -20,7 +20,7 @@ static void *ccsecurity_ops;
 static void *search_binary_handler;
 
 static bool
-setup_variables(void)
+setup_variables(kallsyms *info)
 {
   device_id_t device_id = detect_device();
   int i;
@@ -34,39 +34,39 @@ setup_variables(void)
   }
 
   if (!ccsecurity_ops) {
-    ccsecurity_ops = (void *)kallsyms_in_memory_lookup_name("ccsecurity_ops");
+    ccsecurity_ops = (void *)kallsyms_in_memory_lookup_name(info, "ccsecurity_ops");
   }
 
   if (!search_binary_handler) {
-    search_binary_handler = (void *)kallsyms_in_memory_lookup_name("search_binary_handler");
+    search_binary_handler = (void *)kallsyms_in_memory_lookup_name(info, "search_binary_handler");
   }
 
   return ccsecurity_ops && search_binary_handler;
 }
 
 bool
-has_ccsecurity(void)
+has_ccsecurity(kallsyms *info)
 {
-  return kallsyms_in_memory_lookup_name("ccsecurity_ops") != 0;
+  return kallsyms_in_memory_lookup_name(info, "ccsecurity_ops") != 0;
 }
 
 #define NUM_CCSECURITY_OPS  39
 #define BINARY_HANDLER_POS  35
 
 bool
-unlock_ccsecurity(void)
+unlock_ccsecurity(kallsyms *info)
 {
   void **p;
   const char *name;
   int i;
 
-  if (!setup_variables()) {
+  if (!setup_variables(info)) {
     print_reason_device_not_supported();
     return false;
   }
 
   p = convert_to_kernel_mapped_address(ccsecurity_ops);
-  name = kallsyms_in_memory_lookup_address((unsigned long)p[BINARY_HANDLER_POS]);
+  name = kallsyms_in_memory_lookup_address(info, (unsigned long)p[BINARY_HANDLER_POS]);
 
   if (strcmp(name, "__ccs_search_binary_handler")) {
     if (!strcmp(name, "search_binary_handler")) {
