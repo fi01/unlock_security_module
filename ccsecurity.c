@@ -69,14 +69,13 @@ unlock_ccsecurity(kallsyms *info)
   name = kallsyms_in_memory_lookup_address(info, (unsigned long)p[BINARY_HANDLER_POS]);
 
   if (strcmp(name, "__ccs_search_binary_handler")) {
-    if (!strcmp(name, "search_binary_handler")) {
-      printf("Already disabled??\n");
+    if (p[BINARY_HANDLER_POS] == search_binary_handler) {
+      printf("Already disabled??\nUnlock anyway.");
     }
     else {
       printf("check failed: ccsecurity_ops[%d] = %s\n", BINARY_HANDLER_POS, name);
+      return false;
     }
-
-    return false;
   }
 
   for (i = 0; i < NUM_CCSECURITY_OPS; i++) {
