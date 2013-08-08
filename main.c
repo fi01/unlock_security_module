@@ -132,6 +132,37 @@ unlock_success:
   return true;
 }
 
+static bool
+do_dump_kernel(void)
+{
+  unsigned char *mapped_address;
+  FILE *fp;
+  int i;
+
+  fp = fopen("kernel.dump", "rb");
+  if (fp) {
+    fclose(fp);
+    return false;
+  }
+
+  fp = fopen("kernel.dump", "wb");
+  if (!fp) {
+    return false;
+  }
+
+  mapped_address = convert_to_kernel_mapped_address((void *)KERNEL_BASE_ADDRESS);
+
+  for (i = 0; i < KERNEL_MEMORY_SIZE; i += 1024) {
+    if (fwrite(&mapped_address[i], 1024, 1, fp) != 1) {
+      break;
+    }
+  }
+
+  fclose(fp);
+
+  return true;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -144,6 +175,12 @@ main(int argc, char **argv)
     exit(EXIT_FAILURE);
   }
   printf("OK.\n\n");
+
+  printf("Dump kernel memory...\n");
+  if (do_dump_kernel()) {
+    printf("Dumped.\n");
+  }
+  printf("\n");
 
   printf("Finding kallsyms address in memory...\n");
   mapped_address = convert_to_kernel_mapped_address((void *)KERNEL_BASE_ADDRESS);
