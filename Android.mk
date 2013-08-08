@@ -12,7 +12,8 @@ LOCAL_SRC_FILES := \
   mmc_protect_part.c \
   ccsecurity.c \
   reset_security_ops.c \
-  lsm_capability.c
+  lsm_capability.c \
+  mmap.c
 
 LOCAL_MODULE := unlock_security_module
 LOCAL_MODULE_TAGS := optional
