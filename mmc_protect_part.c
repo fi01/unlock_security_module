@@ -113,6 +113,10 @@ has_mmc_protect_part(kallsyms *info)
 
   protect_inf = convert_to_kernel_mapped_address((void *)mmc_protect_part_address);
 
+  if (protect_inf[0].partition == 0) {
+    protect_inf++;
+  }
+
   if (check_type_sh04e(protect_inf)) {
     printf("  type SH-04E\n");
     mmc_protect_type = MMC_PROTECT_TYPE_SH04E;
@@ -162,6 +166,10 @@ unlock_mmc_protect_part(kallsyms *info)
   }
 
   protect_inf = convert_to_kernel_mapped_address((void *)mmc_protect_part_address);
+
+  if (protect_inf[0].partition == 0) {
+    protect_inf++;
+  }
 
   for (i = 0; i < count; i++) {
     bool unlock_write;
