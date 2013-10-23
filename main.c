@@ -1,6 +1,7 @@
 #define _LARGEFILE64_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/system_properties.h>
 
 #include "kernel_memory.h"
 #include "libkallsyms/kallsyms_in_memory.h"
@@ -11,6 +12,17 @@
 
 #define CHECK_SYMBOL    "printk"
 
+void
+device_detected(void)
+{
+  char device[PROP_VALUE_MAX];
+  char build_id[PROP_VALUE_MAX];
+
+  __system_property_get("ro.product.model", device);
+  __system_property_get("ro.build.display.id", build_id);
+
+  printf("\n\nDevice detected: %s (%s)\n\n", device, build_id);
+}
 
 static bool
 check_is_kallsyms_in_memory_working(kallsyms *info)
@@ -168,6 +180,8 @@ main(int argc, char **argv)
 {
   void *mapped_address;
   kallsyms *info;
+
+  device_detected();
 
   printf("Mapping kernel memory...\n");
   if (!map_kernel_memory()) {
