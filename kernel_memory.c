@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <sys/mman.h>
 #include <zlib.h>
 
 #include "device_database/device_database.h"
@@ -172,6 +173,10 @@ map_kernel_memory(void)
 
   printf("Attempt fb_mem_exploit...\n");
   fb_mem_mmap_base = fb_mem_mmap(&fb_mmap_fd);
+  if (fb_mem_mmap_base == MAP_FAILED) {
+    fb_mem_mmap_base = NULL;
+  }
+
   if (fb_mem_mmap_base) {
     kernel_mapped_address = (unsigned long int)fb_mem_convert_to_mmaped_address((void *)KERNEL_BASE_ADDRESS, fb_mem_mmap_base);
     return true;
