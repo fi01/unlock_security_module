@@ -33,7 +33,7 @@ check_is_kallsyms_in_memory_working(kallsyms *info)
   addr = kallsyms_in_memory_lookup_name(info, CHECK_SYMBOL);
   name = kallsyms_in_memory_lookup_address(info, addr);
 
-  if (strcmp(name, CHECK_SYMBOL) != 0) {
+  if (!name || strcmp(name, CHECK_SYMBOL) != 0) {
     return false;
   }
 
@@ -46,9 +46,9 @@ show_essential_address(kallsyms *info)
   static const char *essential_symbols[] = {
     "prepare_kernel_cred",
     "commit_creds",
-    "ptmx_fops",
     "remap_pfn_range",
     "vmalloc_exec",
+    "ptmx_fops",
     NULL
   };
   const char **name;
