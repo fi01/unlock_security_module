@@ -42,35 +42,41 @@ check_is_kallsyms_in_memory_working(kallsyms *info)
 }
 
 static bool
+show_address(kallsyms *info, device_symbol_t symbol, const char *name)
+{
+  unsigned long int address;
+  bool ret = false;
+
+  address = kallsyms_in_memory_lookup_name(info, name);
+  if (address) {
+    printf("  %s = 0x%08x\n", name, address);
+
+#ifdef HAS_SET_SYMBOL_ADDRESS
+    device_set_symbol_address(symbol, address);
+#endif /* HAS_SET_SYMBOL_ADDRESS */
+
+    ret = true;
+  }
+
+  return ret;
+}
+
+#define SHOW_ADDRESS(info,n) show_address(info, DEVICE_SYMBOL(n), #n)
+
+static bool
 show_essential_address(kallsyms *info)
 {
-  static const char *essential_symbols[] = {
-    "prepare_kernel_cred",
-    "commit_creds",
-    "remap_pfn_range",
-    "vmalloc_exec",
-    "ptmx_fops",
-    NULL
-  };
-  const char **name;
+  unsigned long int address;
   bool ret = false;
 
   printf("Essential symbols are:\n");
-  for (name = essential_symbols; *name; name++) {
-    unsigned long addr;
 
-    addr = kallsyms_in_memory_lookup_name(info, *name);
-    if (addr) {
-      printf("  %s = 0x%08x\n", *name, addr);
+  ret |= SHOW_ADDRESS(info, prepare_kernel_cred);
+  ret |= SHOW_ADDRESS(info, commit_creds);
+  ret |= SHOW_ADDRESS(info, remap_pfn_range);
+  ret |= SHOW_ADDRESS(info, vmalloc_exec);
+  ret |= SHOW_ADDRESS(info, ptmx_fops);
 
-#ifdef HAS_SET_SYMBOL_ADDRESS
-      // FIXME: Use DEVICE_SYMBOL() macro
-      device_set_symbol_address(*name, addr);
-#endif /* HAS_SET_SYMBOL_ADDRESS */
-
-      ret = true;
-    }
-  }
   printf("\n");
 
   return ret;
