@@ -4,29 +4,19 @@
 #include "kallsyms.h"
 #include "mm.h"
 
-unsigned long int
-_get_remap_pfn_range_address(void)
-{
-  unsigned long int address = device_get_symbol_address(DEVICE_SYMBOL(remap_pfn_range));
-
-  if (address) {
-    return address;
-  }
-
-  return 0;
-}
-
 void *
 get_remap_pfn_range_address(void)
 {
   void *ret = NULL;
 
-  if (kallsyms_exist()) {
+  ret = (void*)device_get_symbol_address(DEVICE_SYMBOL(remap_pfn_range));
+  if (!ret && kallsyms_exist()) {
     ret = kallsyms_get_symbol_address("remap_pfn_range");
-  }
-
-  if (!ret) {
-    ret = (void*)_get_remap_pfn_range_address();
+    if (ret) {
+#ifdef HAS_SET_SYMBOL_ADDRESS
+      device_set_symbol_address(DEVICE_SYMBOL(remap_pfn_range), (unsigned long int)ret);
+#endif /* HAS_SET_SYMBOL_ADDRESS */
+    }
   }
 
   if (!ret) {

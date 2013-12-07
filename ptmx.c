@@ -17,6 +17,10 @@ get_ptmx_fops_address(void)
   if (kallsyms_exist()) {
     address = kallsyms_get_symbol_address("ptmx_fops");
     if (address) {
+#ifdef HAS_SET_SYMBOL_ADDRESS
+      device_set_symbol_address(DEVICE_SYMBOL(ptmx_fops), address);
+#endif /* HAS_SET_SYMBOL_ADDRESS */
+
       return address;
     }
   }

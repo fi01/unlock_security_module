@@ -137,12 +137,14 @@ setup_variables(void)
   }
 
   kernel_physical_offset = find_kernel_text_from_iomem();
-  if (kernel_physical_offset) {
-    return true;
+  if (!kernel_physical_offset) {
+    kernel_physical_offset = find_kernel_text_from_config();
   }
 
-  kernel_physical_offset = find_kernel_text_from_config();
   if (kernel_physical_offset) {
+#ifdef HAS_SET_SYMBOL_ADDRESS
+    device_set_symbol_address(DEVICE_SYMBOL(kernel_physical_offset), kernel_physical_offset);
+#endif /* HAS_SET_SYMBOL_ADDRESS */
     return true;
   }
 

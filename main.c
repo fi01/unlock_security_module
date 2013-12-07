@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <sys/system_properties.h>
 
+#include "device_database/device_database.h"
 #include "kernel_memory.h"
 #include "libkallsyms/kallsyms_in_memory.h"
 #include "ccsecurity.h"
@@ -61,6 +62,12 @@ show_essential_address(kallsyms *info)
     addr = kallsyms_in_memory_lookup_name(info, *name);
     if (addr) {
       printf("  %s = 0x%08x\n", *name, addr);
+
+#ifdef HAS_SET_SYMBOL_ADDRESS
+      // FIXME: Use DEVICE_SYMBOL() macro
+      device_set_symbol_address(*name, addr);
+#endif /* HAS_SET_SYMBOL_ADDRESS */
+
       ret = true;
     }
   }
