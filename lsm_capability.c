@@ -8,7 +8,7 @@
 #define SECURITY_NAME_MAX       10
 
 #define SECURITY_OPS_START      ((SECURITY_NAME_MAX + 3) / 4)
-#define SECURITY_OPS_END        142
+#define SECURITY_OPS_END        180
 
 #define DEFAULT_CAP_PREFIX      "cap_"
 #define DEFAULT_CAP_FUNCTION    "cap_syslog"
@@ -32,9 +32,13 @@ unlock_lsm(kallsyms *info, const char *symbol_prefix)
   for (i = SECURITY_OPS_START; i < SECURITY_OPS_END; i++) {
     if (security_ops[i]) {
       const char *name = kallsyms_in_memory_lookup_address(info, (unsigned long)security_ops[i]);
+      if (!name) {
+        break;
+      }
+
       printf("security_ops[%d] = 0x%08x <%s>\n", i, security_ops[i], name);
 
-      if (name && strncmp(name, symbol_prefix, symbol_prefix_len) == 0) {
+      if (strncmp(name, symbol_prefix, symbol_prefix_len) == 0) {
         char fix_name[256];
         void *fix_func = NULL;
 
